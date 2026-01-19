@@ -1,0 +1,26 @@
+{
+    "hotels": [
+        {
+            "name": "Melia Varadero",
+            "location": "Varadero",
+            "room": [
+                {
+                    "type": "Single",
+                    "count": 120,
+                    "pax": 1
+                },
+                {
+                    "type": "Double",
+                    "count": 100,
+                    "pax": 2
+                },
+                {
+                    "type": "Triple",
+                    "count": 80,
+                    "pax": 3
+                }
+            ],
+            "pax_price": 67
+        }
+    ]
+}
