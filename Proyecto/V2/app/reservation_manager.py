@@ -175,6 +175,11 @@ class ReservationManager:
         
         if end < start:
             return (False, "End date must be after start date")
+
+        # Validación: la reserva debe hacerse con al menos 72 horas de antelación
+        min_allowed_date = (datetime.now() + timedelta(hours=72)).date()
+        if start.date() < min_allowed_date:
+            return (False, f"Reservations must be made at least 72 hours in advance. Earliest start date: {min_allowed_date.strftime('%Y-%m-%d')}")
         
         # VALIDACIÓN DE EXCLUSIÓN MUTUA: Verificar si el usuario ya tiene otro vehículo
         existing_vehicle = self.has_overlapping_vehicle_reservation(user, start, end)
@@ -266,6 +271,11 @@ class ReservationManager:
         
         if end < start:
             return (False, "End date must be after start date")
+
+        # Validación: la reserva debe hacerse con al menos 72 horas de antelación
+        min_allowed_date = (datetime.now() + timedelta(hours=72)).date()
+        if start.date() < min_allowed_date:
+            return (False, f"Reservations must be made at least 72 hours in advance. Earliest start date: {min_allowed_date.strftime('%Y-%m-%d')}")
         
         # VALIDACIÓN DE EXCLUSIÓN MUTUA: Verificar si el usuario ya tiene otro hotel
         existing_hotel = self.has_overlapping_hotel_reservation(user, start, end)

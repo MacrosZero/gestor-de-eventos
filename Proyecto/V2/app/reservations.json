@@ -21,6 +21,17 @@
             "days": 3,
             "total_price": 150,
             "created_at": "2026-01-19T21:49:48.942588"
+        },
+        {
+            "id": "2026-01-19T22:00:27.126359",
+            "user": "pedro",
+            "car_type": "sedan",
+            "driver": "Pedro",
+            "start": "2008-12-24T00:00:00",
+            "end": "2008-12-26T00:00:00",
+            "days": 2,
+            "total_price": 100,
+            "created_at": "2026-01-19T22:00:27.126359"
         }
     ],
     "hotel_reservations": [
@@ -35,6 +46,18 @@
             "days": 2,
             "total_price": 134,
             "created_at": "2026-01-19T21:49:48.946689"
+        },
+        {
+            "id": "2026-01-19T22:02:18.567835",
+            "user": "pedro",
+            "hotel": "melia varadero",
+            "room_type": "single",
+            "pax": 3,
+            "start": "2008-12-24T00:00:00",
+            "end": "2008-12-26T00:00:00",
+            "days": 2,
+            "total_price": 402,
+            "created_at": "2026-01-19T22:02:18.567835"
         }
     ]
 }

@@ -33,9 +33,10 @@ class MenuManager:
         """Menú para administradores"""
         menu_options = [
             "1. View Users Data",
-            "2. Manage Resources",
-            "3. View Resources Data",
-            "4. Logout"
+            "2. Make Admin",
+            "3. Manage Resources",
+            "4. View Resources Data",
+            "5. Logout"
         ]
         
         while True:
@@ -45,10 +46,12 @@ class MenuManager:
             if choice == "1":
                 self.user_mgr.display_user_data(username, role)
             elif choice == "2":
-                self._manage_resources_menu()
+                self.user_mgr.make_admin()
             elif choice == "3":
-                self._view_resources_menu()
+                self._manage_resources_menu()
             elif choice == "4":
+                self._view_resources_menu()
+            elif choice == "5":
                 print("Logging out...")
                 break
             else:
@@ -170,11 +173,21 @@ class MenuManager:
     
     def _rent_vehicle_cli(self, user: str) -> None:
         """Interfaz CLI para reservar un vehículo"""
-        car_type = input("Car type to rent: ").strip()
+        # Mostrar tipos de coche disponibles antes de pedir la elección
+        available = self.resource_mgr.get_available_cars()
+        if not available:
+            print("No cars available at the moment.")
+            return
+
+        print("\nAvailable car types:")
+        for c in available:
+            print(f" - {c.get('type')}")
+
+        car_type = input("Choose car type to rent: ").strip()
         start = input("Start date (YYYY-MM-DD): ").strip()
         end = input("End date (YYYY-MM-DD): ").strip()
         need_driver = input("Need driver? (y/n): ").strip().lower() == 'y'
-        
+
         ok, result = self.reservation_mgr.rent_vehicle(user, car_type, start, end, need_driver)
         if ok:
             print("\n✓ Reservation created:")
@@ -184,18 +197,28 @@ class MenuManager:
     
     def _reserve_hotel_cli(self, user: str) -> None:
         """Interfaz CLI para reservar hotel"""
-        hotel = input("Hotel name: ").strip()
+        # Mostrar hoteles y tipos de habitación disponibles
+        hotels = self.resource_mgr.get_all_hotels()
+        if not hotels:
+            print("No hotels available at the moment.")
+            return
+
+        print("\nAvailable hotels and room types:")
+        for h in hotels:
+            print(f" - {h.get('name')} ({h.get('location')})")
+
+        hotel = input("Choose hotel name: ").strip()
         room = input("Room type (Single/Double/Triple): ").strip()
-        
+
         try:
             pax = int(input("Pax count: "))
         except ValueError:
             print("Error: Invalid pax count.")
             return
-        
+
         start = input("Start date (YYYY-MM-DD): ").strip()
         end = input("End date (YYYY-MM-DD): ").strip()
-        
+
         ok, result = self.reservation_mgr.reserve_hotel(user, hotel, room, start, end, pax)
         if ok:
             print("\n✓ Hotel reservation created:")
