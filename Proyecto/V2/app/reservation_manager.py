@@ -202,9 +202,9 @@ class ReservationManager:
         
         return None
     
-    def rent_vehicle(self, user: str, car_type: str, start_date: str, 
-                    end_date: str, need_driver: bool = None) -> Tuple[bool, str]:
-                """Realiza una reserva de vehículo para `user`.
+    def rent_vehicle(self, user: str, car_type: str, start_date: str,
+                     end_date: str, need_driver: bool = None) -> Tuple[bool, str]:
+        """Realiza una reserva de vehículo para `user`.
 
                 Validaciones y efectos:
                         - Verifica que `car_type` exista en los recursos.
@@ -221,7 +221,8 @@ class ReservationManager:
                 Returns:
                         (True, entry_json) en caso de éxito (entry_json es JSON formateado de la reserva),
                         (False, mensaje_de_error) en caso de fallo.
-                """
+                        """
+                
         car = self.resource_mgr.get_car(car_type)
         if not car:
             return (False, f"Car type '{car_type}' not found")

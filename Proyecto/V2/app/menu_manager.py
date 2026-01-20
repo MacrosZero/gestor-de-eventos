@@ -1,10 +1,6 @@
 """
 Menu Manager - Gestiona los menús del sistema
 """
-import json
-from typing import Optional, Tuple
-
-
 class MenuManager:
     """Gestiona los menús interactivos del sistema"""
     
