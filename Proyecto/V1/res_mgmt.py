@@ -2,7 +2,7 @@ import json
 from login import resolve_path, load_data
 from event_gestor import save_data
 
-res_file = "res_data"
+res_file = "res_data.json"
 
 
 def load_res_data(json_file, res_needed):

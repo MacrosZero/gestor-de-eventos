@@ -2,3 +2,5 @@
 /V2/login.json
 /V2/res_data.json
 /V2/reservations.json
+/V1/__pycache__
+/V2/__pycache__
