@@ -16,7 +16,7 @@ class ResourceManager:
             db: Instancia de DatabaseManager
         """
         self.db = db
-        self.res_file = "res_data"
+        self.res_file = "res_data.json"
     
     def load_resources(self) -> Dict:
         """Carga todos los recursos"""
@@ -117,7 +117,7 @@ class ResourceManager:
                 "count": max(0, qty),
                 "licence_type": license_type
             }
-            data["cars"].append(new_car)
+            data.setdefault("cars", []).append(new_car)
             self.save_resources(data)
             print(f"Created new car type '{car_type}' with count {new_car['count']}")
             return True

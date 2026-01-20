@@ -1,0 +1,40 @@
+{
+    "vehicle_reservations": [
+        {
+            "id": "2026-01-19T21:45:44.014513",
+            "user": "alice",
+            "car_type": "sedan",
+            "driver": null,
+            "start": "2026-02-01T00:00:00",
+            "end": "2026-02-03T00:00:00",
+            "days": 2,
+            "total_price": 100,
+            "created_at": "2026-01-19T21:45:44.014513"
+        },
+        {
+            "id": "2026-01-19T21:49:48.942588",
+            "user": "charlie",
+            "car_type": "sedan",
+            "driver": "Juan",
+            "start": "2026-03-01T00:00:00",
+            "end": "2026-03-04T00:00:00",
+            "days": 3,
+            "total_price": 150,
+            "created_at": "2026-01-19T21:49:48.942588"
+        }
+    ],
+    "hotel_reservations": [
+        {
+            "id": "2026-01-19T21:49:48.946689",
+            "user": "hoteluser",
+            "hotel": "Melia Varadero",
+            "room_type": "Single",
+            "pax": 1,
+            "start": "2026-05-01T00:00:00",
+            "end": "2026-05-03T00:00:00",
+            "days": 2,
+            "total_price": 134,
+            "created_at": "2026-01-19T21:49:48.946689"
+        }
+    ]
+}

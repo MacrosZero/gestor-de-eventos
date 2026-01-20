@@ -1,4 +1,13 @@
 {
+    "cars": [
+        {
+            "type": "sedan",
+            "price_per_day": 50,
+            "seats": 5,
+            "count": 2,
+            "licence_type": "B"
+        }
+    ],
     "hotels": [
         {
             "name": "Melia Varadero",
@@ -21,6 +30,13 @@
                 }
             ],
             "pax_price": 67
+        }
+    ],
+    "chofer": [
+        {
+            "name": "Pedro",
+            "license_type": "B",
+            "CI": "06042668628"
         }
     ]
 }
