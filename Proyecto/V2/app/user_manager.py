@@ -19,15 +19,16 @@ class UserManager:
         self.user_file = "login.json"
     
     def register_user(self, username: str, password: str) -> bool:
-        """
-        Registra un nuevo usuario.
-        
-        Args:
-            username: Nombre de usuario
-            password: Contraseña
-            
+        """Registra un nuevo usuario y lo persiste en `login.json`.
+
+        Comportamiento:
+            - Normaliza `username` a minúsculas y recorta espacios.
+            - Valida que `username` y `password` no estén vacíos.
+            - Comprueba que el usuario no exista ya en la lista.
+            - Añade al usuario con rol `'user'` y guarda usando `_save_users`.
+
         Returns:
-            True si se registró exitosamente, False si ya existe
+            True si el usuario fue agregado correctamente, False si ya existía o hubo error.
         """
         username = username.lower().strip()
         password = password.strip()
@@ -46,15 +47,15 @@ class UserManager:
         return self._save_users(users)
     
     def login(self, username: str = None, password: str = None) -> Optional[Tuple[str, str, str]]:
-        """
-        Autentica un usuario.
-        
-        Args:
-            username: Nombre de usuario (si es None, se pide por input)
-            password: Contraseña (si es None, se pide por input)
-            
+        """Autentica un usuario contra los datos almacenados.
+
+        Flujo:
+            - Si `username` o `password` son None se solicitan por consola.
+            - Busca el usuario en la lista y compara la contraseña.
+
         Returns:
-            Tupla (username, password, role) si es exitoso, None en caso contrario
+            Tupla `(username, password, role)` si la autenticación fue exitosa,
+            o `None` si falla (usuario no existe o contraseña incorrecta).
         """
         if username is None:
             username = input("Enter username: ").lower().strip()
@@ -85,14 +86,16 @@ class UserManager:
         return None
     
     def make_admin(self, username: str = None) -> bool:
-        """
-        Promueve un usuario a administrador.
-        
+        """Promueve el usuario indicado a rol 'admin'.
+
         Args:
-            username: Nombre de usuario (si es None, se pide por input)
-            
+            username: Nombre de usuario a promover. Si es None se solicita por consola.
+
+        Comportamiento:
+            - Busca el usuario en la lista; si existe asigna `role = 'admin'` y guarda.
+
         Returns:
-            True si se promovió exitosamente, False en caso contrario
+            True si la promoción y el guardado se realizaron con éxito, False en caso contrario.
         """
         if username is None:
             username = input("Enter username to make admin: ").lower().strip()
@@ -114,12 +117,15 @@ class UserManager:
         return False
     
     def display_user_data(self, username: str, role: str) -> None:
-        """
-        Muestra datos de usuarios.
-        
+        """Muestra en consola datos de usuarios.
+
+        Comportamiento:
+            - Si `role` es 'admin' imprime todos los usuarios y sus roles.
+            - Si `role` es 'user' imprime solo el perfil del `username` dado.
+
         Args:
-            username: Nombre del usuario actual
-            role: Rol del usuario (admin o user)
+            username: Nombre del usuario que solicita ver datos.
+            role: Rol del usuario actual, controla el alcance de la visualización.
         """
         users = self._get_users()
         
@@ -143,22 +149,23 @@ class UserManager:
             print("Error: User profile not found.")
     
     def get_all_users(self) -> List[Dict]:
-        """
-        Obtiene todos los usuarios.
-        
-        Returns:
-            Lista de diccionarios con datos de usuarios
+        """Retorna la lista completa de usuarios almacenados.
+
+        Nota: este método delega en `_get_users` y devuelve una lista (vacía si no hay usuarios).
         """
         return self._get_users()
     
     # ===== Métodos Privados (Gestión de formato) =====
     
     def _get_users(self) -> List[Dict]:
-        """
-        Obtiene la lista de usuarios desde el archivo.
-        
+        """Carga y retorna la lista interna de usuarios desde `login.json`.
+
+        Formatos soportados en el archivo:
+            - `{ "users": [...] }` (estructura preferida)
+            - Lista directa `[...]`
+
         Returns:
-            Lista de usuarios (vacía si el archivo no existe)
+            Lista de usuarios (cada uno es un dict con keys `username`, `password`, `role`).
         """
         data = self.db.load_json_file(self.user_file)
         
@@ -173,14 +180,13 @@ class UserManager:
         return []
     
     def _save_users(self, users: List[Dict]) -> bool:
-        """
-        Guarda la lista de usuarios con formato {"users": [...]}
-        
+        """Guarda la lista de usuarios en `login.json` con el formato {"users": [...]}.
+
         Args:
-            users: Lista de usuarios a guardar
-            
+            users: Lista de diccionarios de usuario que se persistirán.
+
         Returns:
-            True si se guardó exitosamente
+            True si el guardado fue exitoso, False si falló.
         """
         formatted_data = {"users": users}
         if self.db.save(self.user_file, formatted_data):
@@ -189,5 +195,9 @@ class UserManager:
         return False
     
     def get_all_users(self) -> List[Dict]:
-        """Retorna lista de todos los usuarios"""
+        """(Alias) Retorna la lista de todos los usuarios usando `DatabaseManager.load`.
+
+        Nota: existe otro método `get_all_users` que delega en `_get_users`; este
+        método actúa como un alias que devuelve la carga cruda del archivo.
+        """
         return self.db.load(self.user_file, [])

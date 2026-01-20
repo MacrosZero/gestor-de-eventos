@@ -23,18 +23,42 @@ class ReservationManager:
         self.reservations_file = "reservations.json"
     
     def load_reservations(self) -> Dict:
-        """Carga todas las reservas"""
+        """Carga todas las reservas desde `reservations.json`.
+
+        Returns:
+            Diccionario con claves `vehicle_reservations` y `hotel_reservations`.
+
+        Nota:
+            - Si el archivo no existe devuelve la estructura por defecto.
+        """
         data = self.db.load_json_file(self.reservations_file)
         if not data:
             return {"vehicle_reservations": [], "hotel_reservations": []}
         return data
     
     def save_reservations(self, reservations: Dict) -> bool:
-        """Guarda todas las reservas"""
+        """Guarda el diccionario `reservations` en el archivo de reservas.
+
+        Args:
+            reservations: Estructura con reservas de vehículos y hoteles.
+
+        Returns:
+            True si el guardado fue exitoso, False en caso de error de IO.
+        """
         return self.db.save_json_file(self.reservations_file, reservations)
     
     def parse_date(self, date_str: str) -> datetime:
-        """Parsea fecha en 'YYYY-MM-DD' o formato ISO"""
+        """Parsea una cadena de fecha en un objeto `datetime`.
+
+        Soporta dos formatos:
+            - 'YYYY-MM-DD' (sin hora)
+            - Formato ISO que incluye tiempo (por ejemplo '2026-01-01T00:00:00')
+
+        Raises:
+            ValueError si la cadena no puede ser parseada por ninguno de los
+            formatos esperados. El método intenta primero '%Y-%m-%d' y luego
+            `fromisoformat`.
+        """
         try:
             return datetime.strptime(date_str, '%Y-%m-%d')
         except ValueError:
@@ -43,7 +67,25 @@ class ReservationManager:
     def is_resource_available(self, resource_name: str, resource_type: str, 
                             start_req: datetime, end_req: datetime, 
                             total_inventory: int, reservations_list: List) -> bool:
-        """Verifica si un recurso está disponible en un rango de fechas"""
+        """Determina si hay al menos una unidad disponible del recurso pedido
+        para el rango [start_req, end_req).
+
+        Lógica:
+            - Recorre `reservations_list` y cuenta cuántas reservas del mismo
+              recurso y tipo se solapan con el rango solicitado.
+            - Considera solapamiento cuando (start_req < res_end) and (res_start < end_req).
+            - Retorna True si `total_inventory - ocupadas > 0`.
+
+        Args:
+            resource_name: Nombre del recurso (hotel name o car type dependiendo).
+            resource_type: Tipo de recurso (para hotels indica room_type, para cars indica car_type).
+            start_req, end_req: Rangos de fecha como `datetime`.
+            total_inventory: Cantidad total disponible de ese recurso.
+            reservations_list: Lista de reservas del tipo correspondiente.
+
+        Returns:
+            True si hay disponibilidad, False si está agotado para el rango.
+        """
         occupied = 0
         for res in reservations_list:
             match_resource = (res.get('hotel') == resource_name and res.get('room_type') == resource_type) or \
@@ -59,17 +101,18 @@ class ReservationManager:
         return (total_inventory - occupied) > 0
     
     def has_overlapping_vehicle_reservation(self, user: str, start_req: datetime, end_req: datetime) -> Optional[Dict]:
-        """
-        Verifica si un usuario ya tiene una reserva de vehículo que se solapa con las fechas solicitadas.
-        Restricción de Exclusión Mutua: No puede haber dos vehículos reservados simultáneamente.
-        
+        """Verifica si `user` ya tiene una reserva de vehículo que se solapa con las fechas.
+
+        Política de exclusión mutua:
+            - Un usuario no puede tener más de una reserva de vehículo cuyos
+              intervalos de fechas se solapen.
+
         Args:
-            user: Nombre del usuario
-            start_req: Fecha de inicio solicitada
-            end_req: Fecha de fin solicitada
-            
+            user: Nombre del usuario a comprobar.
+            start_req, end_req: Intervalo solicitado como `datetime`.
+
         Returns:
-            Dict con la reserva existente si hay conflicto, None si está disponible
+            La reserva existente (dict) que entra en conflicto, o None si no hay conflicto.
         """
         reservations = self.load_reservations()
         vehicle_reservations = reservations.get('vehicle_reservations', [])
@@ -87,17 +130,12 @@ class ReservationManager:
         return None  # No hay conflicto
     
     def has_overlapping_hotel_reservation(self, user: str, start_req: datetime, end_req: datetime) -> Optional[Dict]:
-        """
-        Verifica si un usuario ya tiene una reserva de hotel que se solapa con las fechas solicitadas.
-        Restricción de Exclusión Mutua: No puede haber dos hoteles reservados simultáneamente.
-        
-        Args:
-            user: Nombre del usuario
-            start_req: Fecha de inicio solicitada
-            end_req: Fecha de fin solicitada
-            
-        Returns:
-            Dict con la reserva existente si hay conflicto, None si está disponible
+        """Verifica si `user` ya tiene una reserva de hotel que se solapa con las fechas.
+
+        Política de exclusión mutua similar a la vehicular: no permitir dos reservas
+        de hotel que se solapen para el mismo usuario.
+
+        Args y Returns: ver `has_overlapping_vehicle_reservation`.
         """
         reservations = self.load_reservations()
         hotel_reservations = reservations.get('hotel_reservations', [])
@@ -116,7 +154,19 @@ class ReservationManager:
 
     def find_next_available_slot(self, resource_name: str, resource_type: str, 
                                 duration_days: int, reservation_type: str = 'vehicle') -> Optional[Tuple[str, str]]:
-        """Encuentra el próximo slot disponible para un recurso"""
+        """Busca la primera ventana continua de `duration_days` donde exista
+        disponibilidad para el recurso indicado dentro del horizonte de búsqueda.
+
+        Args:
+            resource_name: Nombre del recurso (hotel name o car type).
+            resource_type: Tipo específico (room type o car type según `reservation_type`).
+            duration_days: Duración requerida en días.
+            reservation_type: 'vehicle' o 'hotel' para elegir la fuente de reservas.
+
+        Returns:
+            Tupla (start_str, end_str) con fechas en 'YYYY-MM-DD' del primer slot
+            encontrado, o None si no hay hueco en el periodo de búsqueda (365 días).
+        """
         reservations = self.load_reservations()
         
         total_inventory = 0
@@ -154,15 +204,24 @@ class ReservationManager:
     
     def rent_vehicle(self, user: str, car_type: str, start_date: str, 
                     end_date: str, need_driver: bool = None) -> Tuple[bool, str]:
-        """
-        Reserva un vehículo.
-        
-        Validaciones:
-        - El recurso debe existir
-        - Las fechas deben ser válidas
-        - El recurso debe estar disponible
-        - EXCLUSIÓN MUTUA: El usuario no puede tener otro vehículo en esas fechas
-        """
+                """Realiza una reserva de vehículo para `user`.
+
+                Validaciones y efectos:
+                        - Verifica que `car_type` exista en los recursos.
+                        - Parsea y valida fechas; asegura que `end >= start`.
+                        - Requiere que la reserva se haga con >=72 horas de antelación
+                            (esto ya se valida antes de llegar aquí si se llama desde la CLI).
+                        - Comprueba la política de exclusión mutua: un usuario no puede
+                            reservar dos vehículos solapados.
+                        - Verifica disponibilidad por inventario y, si no hay, sugiere
+                            el siguiente hueco disponible.
+                        - Si `need_driver` es True, busca un chofer con la licencia
+                            requerida por el coche; si no hay, retorna error.
+
+                Returns:
+                        (True, entry_json) en caso de éxito (entry_json es JSON formateado de la reserva),
+                        (False, mensaje_de_error) en caso de fallo.
+                """
         car = self.resource_mgr.get_car(car_type)
         if not car:
             return (False, f"Car type '{car_type}' not found")
@@ -240,15 +299,17 @@ class ReservationManager:
     
     def reserve_hotel(self, user: str, hotel_name: str, room_type: str, 
                      start_date: str, end_date: str, pax: int = 1) -> Tuple[bool, str]:
-        """
-        Reserva una habitación de hotel.
-        
-        Validaciones:
-        - El hotel debe existir
-        - La habitación debe existir
-        - Las fechas deben ser válidas
-        - La habitación debe estar disponible
-        - EXCLUSIÓN MUTUA: El usuario no puede tener otro hotel en esas fechas
+        """Reserva una habitación de hotel para `user`.
+
+        Validaciones y efectos:
+            - Verifica la existencia del hotel y del tipo de habitación.
+            - Parsea y valida fechas; asegura que `end >= start`.
+            - Requiere que la reserva se haga con >=72 horas de antelación.
+            - Aplica la política de exclusión mutua para reservas de hotel.
+            - Comprueba inventario de habitaciones y sugiere el siguiente hueco si no hay disponibilidad.
+
+        Returns:
+            (True, entry_json) en caso de éxito, (False, mensaje_de_error) en caso de fallo.
         """
         hotel = self.resource_mgr.get_hotel(hotel_name)
         if not hotel:
@@ -318,14 +379,30 @@ class ReservationManager:
         return (True, json.dumps(entry, ensure_ascii=False, indent=2))
     
     def get_user_reservations(self, user: str) -> Tuple[List, List]:
-        """Obtiene las reservas de un usuario"""
+        """Retorna las reservas del usuario separadas en vehículos y hoteles.
+
+        Args:
+            user: Nombre/identificador del usuario.
+
+        Returns:
+            Tuple (vehicle_list, hotel_list) filtradas por `user`.
+        """
         reservations = self.load_reservations()
         vehicle = [r for r in reservations.get('vehicle_reservations', []) if r.get('user') == user]
         hotel = [r for r in reservations.get('hotel_reservations', []) if r.get('user') == user]
         return (vehicle, hotel)
     
     def cancel_reservation(self, res_id: str, res_type: str = 'vehicle') -> bool:
-        """Cancela una reservación por su ID"""
+        """Cancela una reserva por su `id`.
+
+        Args:
+            res_id: Identificador de la reserva (se usa campo 'id').
+            res_type: 'vehicle' o 'hotel' para elegir la lista a inspeccionar.
+
+        Comportamiento:
+            - Filtra la lista correspondiente para eliminar la reserva con `id` igual a `res_id`.
+            - Si hubo un cambio, guarda el archivo y retorna True; en otro caso retorna False.
+        """
         reservations = self.load_reservations()
         key = 'vehicle_reservations' if res_type == 'vehicle' else 'hotel_reservations'
         

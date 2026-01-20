@@ -25,12 +25,28 @@ class MenuManager:
         self.current_role = None
     
     def display_menu(self, options: list) -> None:
-        """Muestra un menú con las opciones proporcionadas"""
+        """Imprime en consola las `options` proporcionadas, una por línea.
+
+        Args:
+            options: Lista de strings que representan las opciones del menú.
+        """
         for option in options:
             print(option)
     
     def admin_menu(self, username: str, role: str) -> None:
-        """Menú para administradores"""
+        """Menú interactivo para usuarios con rol 'admin'.
+
+        Opciones principales:
+            1. View Users Data
+            2. Make Admin
+            3. Manage Resources
+            4. View Resources Data
+            5. Logout
+
+        Notas:
+            - Esta función es el bucle principal del menú de administradores y
+              realiza llamadas a `UserManager` y `ResourceManager` según la opción.
+        """
         menu_options = [
             "1. View Users Data",
             "2. Make Admin",
@@ -58,7 +74,10 @@ class MenuManager:
                 print("Invalid choice. Please try again.")
     
     def user_menu(self, username: str, role: str) -> None:
-        """Menú para usuarios normales"""
+        """Menú interactivo para usuarios con rol 'user'.
+
+        Opciones incluyen ver perfil, rentar vehículo, reservar hotel, ver y cancelar reservas.
+        """
         menu_options = [
             "1. View User Data",
             "2. Rent Vehicle",
@@ -89,7 +108,10 @@ class MenuManager:
                 print("Invalid choice. Please try again.")
     
     def main_menu(self) -> None:
-        """Menú principal de la aplicación"""
+        """Bucle del menú principal que permite registrarse, iniciar sesión o salir.
+
+        - Si el usuario inicia sesión se delega al menú correspondiente por rol.
+        """
         menu_options = [
             "1. Register User",
             "2. Login",
@@ -111,13 +133,21 @@ class MenuManager:
                 print("Invalid choice. Please try again.")
     
     def _register_user(self) -> None:
-        """Registra un nuevo usuario"""
+        """Interfaz para registrar usuarios solicitando `username` y `password` por consola.
+
+        Llamada: delega en `UserManager.register_user`.
+        """
         username = input("Enter username: ").lower().strip()
         password = input("Enter password: ").strip()
         self.user_mgr.register_user(username, password)
     
     def _login(self) -> None:
-        """Autentica un usuario y muestra el menú correspondiente"""
+        """Solicita credenciales y, si son válidas, abre el menú apropiado por rol.
+
+        Flujo:
+            - Llama a `UserManager.login` para autenticar.
+            - Si el rol es 'admin' llama a `admin_menu`, si no a `user_menu`.
+        """
         result = self.user_mgr.login()
         if result:
             username, password, role = result
@@ -127,7 +157,14 @@ class MenuManager:
                 self.user_menu(username, role)
     
     def _manage_resources_menu(self) -> None:
-        """Menú para gestionar recursos"""
+        """Interfaz de menú para tareas administrativas sobre recursos.
+
+        Opciones:
+            1. Add Hotel
+            2. Add Car
+            3. Add Driver
+            4. Back
+        """
         while True:
             print("\n--- Manage Resources ---")
             print("1. Add Hotel")
@@ -148,7 +185,10 @@ class MenuManager:
                 print("Invalid choice. Please try again.")
     
     def _view_resources_menu(self) -> None:
-        """Menú para ver recursos"""
+        """Interfaz para visualizar distintos tipos de recursos disponibles.
+
+        Opciones permiten ver resumen, hoteles, coches y choferes.
+        """
         while True:
             print("\n--- View Resources ---")
             print("1. All Resources Summary")
@@ -172,7 +212,13 @@ class MenuManager:
                 print("Invalid choice. Please try again.")
     
     def _rent_vehicle_cli(self, user: str) -> None:
-        """Interfaz CLI para reservar un vehículo"""
+        """Interfaz CLI para reservar un vehículo mostrando opciones disponibles.
+
+        Comportamiento:
+            - Muestra `get_available_cars()` para que el usuario elija un tipo válido.
+            - Solicita fechas y si necesita chofer.
+            - Llama a `ReservationManager.rent_vehicle` y muestra el resultado.
+        """
         # Mostrar tipos de coche disponibles antes de pedir la elección
         available = self.resource_mgr.get_available_cars()
         if not available:
@@ -196,7 +242,12 @@ class MenuManager:
             print(f"✗ Error: {result}")
     
     def _reserve_hotel_cli(self, user: str) -> None:
-        """Interfaz CLI para reservar hotel"""
+        """Interfaz CLI para reservar hotel mostrando hoteles y tipos de habitación.
+
+        Comportamiento:
+            - Lista hoteles y sus `room` entries con counts antes de pedir elección.
+            - Solicita pax, fechas y luego llama a `ReservationManager.reserve_hotel`.
+        """
         # Mostrar hoteles y tipos de habitación disponibles
         hotels = self.resource_mgr.get_all_hotels()
         if not hotels:
