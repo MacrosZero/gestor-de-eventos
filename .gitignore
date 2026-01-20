@@ -4,3 +4,18 @@
 /V2/reservations.json
 /V1/__pycache__
 /V2/__pycache__
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+env/
+venv/
+
+# Editor files
+.vscode/
+.idea/
+
+# Test temp
+V2/app/tests/tmp_test_env/
