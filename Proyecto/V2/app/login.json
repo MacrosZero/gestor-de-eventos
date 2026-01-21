@@ -2,18 +2,13 @@
     "users": [
         {
             "username": "admin",
-            "password": "1234",
+            "password": [
+                "pbkdf2_sha256",
+                100000,
+                "523bb4a4eca83c6f19a53098fe178611",
+                "ef5ef986aeb77c8c4e1895f620c6f4f0f2b41ed8a5daa42ca368a3065cffd04c"
+            ],
             "role": "admin"
-        },
-        {
-            "username": "pedro",
-            "password": "1234",
-            "role": "admin"
-        },
-        {
-            "username": "jose",
-            "password": "1234",
-            "role": "user"
         }
     ]
 }

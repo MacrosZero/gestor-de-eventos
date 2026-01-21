@@ -3,7 +3,13 @@ User Manager - Gestiona autenticación y usuarios
 """
 from database import DatabaseManager
 from typing import Tuple, Optional, List, Dict
+import os
+import hashlib
 
+# Password hashing settings
+_HASH_NAME = 'sha256'
+_ITERATIONS = 100_000
+_SALT_BYTES = 16
 
 class UserManager:
     """Gestiona usuarios, autenticación y roles"""
@@ -42,7 +48,7 @@ class UserManager:
         if any(user.get("username", "") == username for user in users):
             print("Error: User already exists.")
             return False
-        
+        password = self._hash_password(password)
         users.append({"username": username, "password": password, "role": "user"})
         return self._save_users(users)
     
@@ -61,7 +67,7 @@ class UserManager:
             username = input("Enter username: ").lower().strip()
         else:
             username = str(username).lower().strip()
-        
+
         if password is None:
             password = input("Enter password: ").strip()
         else:
@@ -70,17 +76,30 @@ class UserManager:
         if not username or not password:
             print("Error: Username and password cannot be empty.")
             return None
-        
         users = self._get_users()
         
         for user in users:
             if user.get('username', '') == username:
-                if user.get('password') == password:
-                    print("Login successful.")
-                    return (user.get('username'), user.get('password'), user.get('role'))
+                stored = user.get('password')
+                # Si el password almacenado es una tupla/list usar el verificador
+                if isinstance(stored, (list, tuple)):
+                    if stored and self._verify_password(password, stored):
+                        print("Login successful.")
+                        return (user.get('username'), None, user.get('role'))
+                    else:
+                        print("Error: Incorrect password.")
+                        return None
                 else:
-                    print("Error: Incorrect password.")
-                    return None
+                    # Posible contraseña en claro almacenada (migración): comprobar igualdad directa
+                    if isinstance(stored, str) and stored == password:
+                        # Migrar a hash seguro y guardar
+                        user['password'] = self._hash_password(password)
+                        self._save_users(users)
+                        print("Login successful. Password migrated to hashed storage.")
+                        return (user.get('username'), None, user.get('role'))
+                    else:
+                        print("Error: Incorrect password.")
+                        return None
         
         print("Error: User not found.")
         return None
@@ -201,3 +220,38 @@ class UserManager:
         método actúa como un alias que devuelve la carga cruda del archivo.
         """
         return self.db.load(self.user_file, [])
+    
+    def _hash_password(self, password: str):
+        """Genera un hash PBKDF2 para `password` y lo devuelve como tupla:
+        (algo, iterations, salt_hex, hash_hex)
+        """
+        salt = os.urandom(_SALT_BYTES)
+        dk = hashlib.pbkdf2_hmac(_HASH_NAME, password.encode('utf-8'), salt, _ITERATIONS)
+        # Devolver tupla estructurada (se serializará como lista en JSON)
+        return (f"pbkdf2_{_HASH_NAME}", _ITERATIONS, salt.hex(), dk.hex())
+
+    def _verify_password(self, password: str, stored: str) -> bool:
+        """Verifica si `password` coincide con el hash almacenado `stored`.
+
+        Args:
+            password: Contraseña en texto plano a verificar.
+            stored: Cadena en formato salt.hex().hash.hex().
+
+        Returns:
+            True si la contraseña coincide, False en caso contrario."""
+        try:
+            if not isinstance(stored, (list, tuple)):
+                return False
+
+            parts = list(map(str, stored))
+            if len(parts) != 4:
+                return False
+
+            # parts: algo, iterations, salt_hex, hash_hex
+            iterations = int(parts[1])
+            salt = bytes.fromhex(parts[2])
+            hash_hex = parts[3]
+            dk = hashlib.pbkdf2_hmac(_HASH_NAME, password.encode('utf-8'), salt, iterations)
+            return dk.hex() == hash_hex
+        except Exception:
+            return False
