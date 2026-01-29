@@ -26,9 +26,11 @@ class MenuManager:
         Args:
             options: Lista de strings que representan las opciones del menú.
         """
+        print("\n")
         for option in options:
             print(option)
-    
+        
+
     def admin_menu(self, username: str, role: str) -> None:
         """Menú interactivo para usuarios con rol 'admin'.
 
