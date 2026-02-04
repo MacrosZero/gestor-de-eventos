@@ -1,21 +1,37 @@
+# Project specific ignores
 /Testing.py
-/V2/login.json
-/V2/res_data.json
-/V2/reservations.json
-/V1/__pycache__
-/V2/__pycache__
+
+# Ignore all JSON data files
+*.json
 
 # Python artifacts
 __pycache__/
+**/__pycache__/
 *.py[cod]
+*.pyc
+*.pyo
+*.pyd
 
 # Virtual environments
 env/
 venv/
+.venv/
 
-# Editor files
+# Editor and IDE files
 .vscode/
 .idea/
 
+# Build / distribution
+build/
+dist/
+*.egg-info/
+
 # Test temp
 V2/app/tests/tmp_test_env/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Optional: local config
+local_settings.py
